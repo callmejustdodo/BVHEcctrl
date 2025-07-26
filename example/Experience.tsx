@@ -63,17 +63,17 @@ export default function Experience() {
     }, { collapsed: true }),
     Movement: folder({
       turnSpeed: { value: 15, min: 0, max: 100, step: 1 },
-      maxWalkSpeed: { value: 3, min: 0, max: 10, step: 0.1 },
-      maxRunSpeed: { value: 5, min: 0, max: 20, step: 0.1 },
+      maxWalkSpeed: { value: 1.1, min: 0, max: 10, step: 0.1 }, // 3
+      maxRunSpeed: { value: 5.5, min: 0, max: 20, step: 0.1 }, // 5
       acceleration: { value: 26, min: 0, max: 100, step: 1 },
-      deceleration: { value: 15, min: 0, max: 50, step: 1 },
+      deceleration: { value: 30, min: 0, max: 50, step: 1 }, // 15
       counterVelFactor: { value: 1.5, min: 0, max: 5, step: 0.1 },
       airDragFactor: { value: 0.3, min: 0, max: 1, step: 0.05 },
-      jumpVel: { value: 5, min: 0, max: 20, step: 0.1 },
+      jumpVel: { value: 6, min: 0, max: 20, step: 0.1 }, // 5
     }, { collapsed: true }),
     Floating: folder({
       maxSlope: { value: 1, min: 0, max: Math.PI / 2, step: 0.01 },
-      floatHeight: { value: 0.25, min: 0, max: 1, step: 0.01 },
+      floatHeight: { value: 0.4, min: 0, max: 1, step: 0.01 }, // 0.25
       floatPullBackHeight: { value: 0.25, min: 0, max: 1, step: 0.01 },
       floatSensorRadius: { value: 0.12, min: 0, max: 1, step: 0.01 },
       floatSpringK: { value: 900, min: 0, max: 3000, step: 10 },
@@ -182,9 +182,11 @@ export default function Experience() {
           ref={ecctrlRef}
           debug={EcctrlDebugSettings.EcctrlDebug}
           {...EcctrlDebugSettings}
+          colliderCapsuleArgs={[0.3, 0.8, 4, 8]}
         >
           {/* Character Model */}
-          <CharacterModel />
+          {/* <CharacterModel /> */}
+          <AnimatedCharaterModel slowMotion={EcctrlDebugSettings.slowMotionFactor} />
         </BVHEcctrl>
       </KeyboardControls>
 

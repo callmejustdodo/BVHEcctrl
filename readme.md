@@ -172,6 +172,58 @@ Default BVHOptions:
 }
 ```
 
+## 🎮 Virtual Joystick and Button Integration
+
+BVHEcctrl provides mobile-friendly UI components to control character movement and actions using touch input. Simply import and place `<Joystick />` and `<VirtualButton />` outside the `<Canvas>` component:
+
+```js
+import { Joystick, VirtualButton } from "bvhecctrl";
+
+<Joystick />
+
+<VirtualButton
+  id="run"
+  label="RUN"
+  buttonWrapperStyle={{ right: "100px", bottom: "40px" }}
+/>
+
+<VirtualButton
+  id="jump"
+  label="JUMP"
+  buttonWrapperStyle={{ right: "40px", bottom: "100px" }}
+/>
+```
+
+You can define additional <VirtualButton /> components beyond the built-in "run" and "jump" ones, such as:
+
+```js
+import { VirtualButton, useButtonStore } from "bvhecctrl";
+
+<VirtualButton id="dance" />;
+
+// Later access it in your logic
+const { buttons } = useButtonStore.getState();
+console.log(buttons.dance); // true or false
+```
+
+## 🧱 Joystick Component Props
+
+| Prop                   | Type                  | Default | Description                       |
+| ---------------------- | --------------------- | ------- | --------------------------------- |
+| `joystickMaxRadius`    | `number`              | `50`    | Maximum drag radius.              |
+| `joystickWrapperStyle` | `React.CSSProperties` | `-`     | CSS style for the outer wrapper.  |
+| `joystickBaseStyle`    | `React.CSSProperties` | `-`     | CSS style for the joystick base.  |
+| `joystickKnobStyle`    | `React.CSSProperties` | `-`     | CSS style for the draggable knob. |
+
+## 🧱 VirtualButton Component Props
+
+| Prop                 | Type                  | Default | Description                                               |
+| -------------------- | --------------------- | ------- | --------------------------------------------------------- |
+| `id`                 | `string`              | `-`     | Unique ID to map to actions ("run" & "jump" are handled). |
+| `label`              | `string`              | `-`     | Optional label text on the button.                        |
+| `buttonWrapperStyle` | `React.CSSProperties` | `-`     | CSS style for the wrapper container.                      |
+| `buttonCapStyle`     | `React.CSSProperties` | `-`     | CSS style for the button cap.                             |
+
 ## 🧩 Extra Utilities
 
 ### Accessing the Controller Ref:
@@ -179,6 +231,9 @@ Default BVHOptions:
 ```js
 // Access the character group (THREE.Group)
 ecctrlRef.current.group;
+
+// Access the character model (THREE.Group)
+ecctrlRef.current.model;
 
 // Reset current velocity to zero
 ecctrlRef.current.resetLinVel();
@@ -211,6 +266,20 @@ characterStatus.movingDir; // THREE.Vector3
 characterStatus.isOnGround; // boolean
 characterStatus.isOnMovingPlatform; // boolean
 characterStatus.animationStatus; // "IDLE" | "WALK" | "RUN" | "JUMP_START" | "JUMP_IDLE" | "JUMP_FALL" | "JUMP_LAND"
+```
+
+### Accessing Character Animation Status (global store)
+
+```js
+// You can track the current animation state of the character using the global animation store
+import { useAnimationStore } from "bvhecctrl";
+
+const animationStatus = useAnimationStore((state) => state.animationStatus); // "IDLE" | "WALK" | "RUN" | "JUMP_START" | "JUMP_IDLE" | "JUMP_FALL" | "JUMP_LAND"
+
+// This value updates reactively and can be used in a useEffect:
+useEffect(() => {
+  console.log("Animation changed to:", animationStatus);
+}, [animationStatus]);
 ```
 
 ## 💰 Support This Project

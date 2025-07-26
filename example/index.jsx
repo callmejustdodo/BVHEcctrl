@@ -51,7 +51,7 @@ root.render(
         fov: 65,
         near: 0.1,
         far: 1000,
-        position: [0, 1, 5],
+        position: [0, 0, 4],
       }}
       // gl={async (props) => {
       //   extend(THREE);
