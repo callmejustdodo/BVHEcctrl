@@ -57,3 +57,4 @@ export type CharacterAnimationStatus =
   | "JUMP_IDLE"
   | "JUMP_FALL"
   | "JUMP_LAND";
+export type FloatCheckType = "RAYCAST" | "SHAPECAST" | "BOTH";

@@ -18,6 +18,8 @@ import SongMap from "./SongMap";
 import LargeFloorMap from "./LargeFloorMap";
 import InstancedBuild from "./InstancedBuild";
 import InfinityBuildRoof from "./InfinityBuildRoof";
+import AnimatedCharaterModel from "./AnimatedCharacterModel";
+import GeneralMap from "./GeneralMap"
 
 export default function Experience() {
   /**
@@ -32,7 +34,6 @@ export default function Experience() {
    */
   const camControlRef = useRef<CameraControls | null>(null)
   const ecctrlRef = useRef<BVHEcctrlApi | null>(null)
-  const characterModelRef = useRef<THREE.Group | null>(null)
   const kinematicCollderRef = useRef<THREE.Group | null>(null)
   const kinematicPlatformRef001 = useRef<THREE.Group | null>(null)
   const kinematicPlatformRef002 = useRef<THREE.Group | null>(null)
@@ -72,7 +73,7 @@ export default function Experience() {
     }, { collapsed: true }),
     Floating: folder({
       maxSlope: { value: 1, min: 0, max: Math.PI / 2, step: 0.01 },
-      floatHeight: { value: 0.2, min: 0, max: 1, step: 0.01 },
+      floatHeight: { value: 0.25, min: 0, max: 1, step: 0.01 },
       floatPullBackHeight: { value: 0.25, min: 0, max: 1, step: 0.01 },
       floatSensorRadius: { value: 0.12, min: 0, max: 1, step: 0.01 },
       floatSpringK: { value: 900, min: 0, max: 3000, step: 10 },
@@ -125,8 +126,8 @@ export default function Experience() {
   }, [])
 
   useFrame((state) => {
-    // For camera control to follow character
     if (camControlRef.current && ecctrlRef.current) {
+      // For camera control to follow character
       if (ecctrlRef.current.group)
         camControlRef.current.moveTo(
           ecctrlRef.current.group.position.x,
@@ -134,15 +135,9 @@ export default function Experience() {
           ecctrlRef.current.group.position.z,
           true
         )
-
       // Hide character model if camera is too close
-      if (characterModelRef.current) {
-        if (camControlRef.current.distance < 0.7) {
-          characterModelRef.current.visible = false
-        } else {
-          characterModelRef.current.visible = true
-        }
-      }
+      if (ecctrlRef.current.model)
+        ecctrlRef.current.model.visible = camControlRef.current.distance > 0.7
     }
 
     // Animate kinematic platform
@@ -187,13 +182,9 @@ export default function Experience() {
           ref={ecctrlRef}
           debug={EcctrlDebugSettings.EcctrlDebug}
           {...EcctrlDebugSettings}
-        // spring: 900, damping: 30
-        // spring: 600, damping: 28
         >
           {/* Character Model */}
-          <group ref={characterModelRef}>
-            <CharacterModel />
-          </group>
+          <CharacterModel />
         </BVHEcctrl>
       </KeyboardControls>
 

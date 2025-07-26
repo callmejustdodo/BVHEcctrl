@@ -115,36 +115,37 @@ useFrame(() => {
 
 ## 🧱 BVHEcctrl Props
 
-| Prop                         | Type                               | Default            | Description                                                   |
-| ---------------------------- | ---------------------------------- | ------------------ | ------------------------------------------------------------- |
-| `debug`                      | `boolean`                          | `false`            | Enables visual debugging.                                     |
-| `colliderCapsuleArgs`        | `[number, number, number, number]` | `[0.3, 0.6, 4, 8]` | Capsule shape: [radius, height, capSegments, radialSegments]. |
-| `paused`                     | `boolean`                          | `false`            | Freezes character physics and collision response.             |
-| `delay`                      | `number`                           | `1.5`              | Physics delay after initialization (in seconds).              |
-| `gravity`                    | `number`                           | `9.81`             | World gravity.                                                |
-| `fallGravityFactor`          | `number`                           | `4`                | Multiplier to increase falling speed.                         |
-| `maxFallSpeed`               | `number`                           | `50`               | Maximum fall velocity cap.                                    |
-| `mass`                       | `number`                           | `1`                | Virtual mass, affects float behavior.                         |
-| `sleepTimeout`               | `number`                           | `10`               | Time before character enters sleep state when idle.           |
-| `slowMotionFactor`           | `number`                           | `1`                | Global time scaling (e.g., `0.5` = half-speed).               |
-| `turnSpeed`                  | `number`                           | `15`               | Turn speed when changing direction.                           |
-| `maxWalkSpeed`               | `number`                           | `3`                | Max speed when walking.                                       |
-| `maxRunSpeed`                | `number`                           | `5`                | Max speed when running.                                       |
-| `acceleration`               | `number`                           | `26`               | Speed increase per second.                                    |
-| `deceleration`               | `number`                           | `15`               | Speed decrease when input is released.                        |
-| `counterVelFactor`           | `number`                           | `1.5`              | Extra velocity when changing direction.                       |
-| `airDragFactor`              | `number`                           | `0.3`              | Simulated drag while in air.                                  |
-| `jumpVel`                    | `number`                           | `5`                | Upward velocity when jumping.                                 |
-| `maxSlope`                   | `number`                           | `1`                | Max walkable surface slope (in radians).                      |
-| `floatHeight`                | `number`                           | `0.2`              | Desired float height above ground.                            |
-| `floatPullBackHeight`        | `number`                           | `0.25`             | Additional distance below ground used to pull character down. |
-| `floatSensorRadius`          | `number`                           | `0.12`             | Radius of the sensor used to sense the ground.                |
-| `floatSpringK`               | `number`                           | `600`              | Spring constant for floating.                                 |
-| `floatDampingC`              | `number`                           | `28`               | Damping factor for float spring (prevents oscillation).       |
-| `collisionCheckIteration`    | `number`                           | `3`                | Number of collision check per frame.                          |
-| `collisionPushBackVelocity`  | `number`                           | `3`                | Extra velocity applied to resolve penetration.                |
-| `collisionPushBackDamping`   | `number`                           | `0.1`              | Damping applied to the pushback force.                        |
-| `collisionPushBackThreshold` | `number`                           | `0.005`            | Minimum depth before pushback activates.                      |
+| Prop                         | Type                                     | Default            | Description                                                   |
+| ---------------------------- | ---------------------------------------- | ------------------ | ------------------------------------------------------------- |
+| `debug`                      | `boolean`                                | `false`            | Enables visual debugging.                                     |
+| `colliderCapsuleArgs`        | `[number, number, number, number]`       | `[0.3, 0.6, 4, 8]` | Capsule shape: [radius, height, capSegments, radialSegments]. |
+| `paused`                     | `boolean`                                | `false`            | Freezes character physics and collision response.             |
+| `delay`                      | `number`                                 | `1.5`              | Physics delay after initialization (in seconds).              |
+| `gravity`                    | `number`                                 | `9.81`             | World gravity.                                                |
+| `fallGravityFactor`          | `number`                                 | `4`                | Multiplier to increase falling speed.                         |
+| `maxFallSpeed`               | `number`                                 | `50`               | Maximum fall velocity cap.                                    |
+| `mass`                       | `number`                                 | `1`                | Virtual mass, affects float behavior.                         |
+| `sleepTimeout`               | `number`                                 | `10`               | Time before character enters sleep state when idle.           |
+| `slowMotionFactor`           | `number`                                 | `1`                | Global time scaling (e.g., `0.5` = half-speed).               |
+| `turnSpeed`                  | `number`                                 | `15`               | Turn speed when changing direction.                           |
+| `maxWalkSpeed`               | `number`                                 | `3`                | Max speed when walking.                                       |
+| `maxRunSpeed`                | `number`                                 | `5`                | Max speed when running.                                       |
+| `acceleration`               | `number`                                 | `30`               | Speed increase per second.                                    |
+| `deceleration`               | `number`                                 | `20`               | Speed decrease when input is released.                        |
+| `counterVelFactor`           | `number`                                 | `1.5`              | Extra velocity when changing direction.                       |
+| `airDragFactor`              | `number`                                 | `0.3`              | Simulated drag while in air.                                  |
+| `jumpVel`                    | `number`                                 | `5`                | Upward velocity when jumping.                                 |
+| `floatCheckType`             | `"RAYCAST"` \| `"SHAPECAST"` \| `"BOTH"` | `BOTH`             | Able to switch between different float check type.            |
+| `maxSlope`                   | `number`                                 | `1`                | Max walkable surface slope (in radians).                      |
+| `floatHeight`                | `number`                                 | `0.2`              | Desired float height above ground.                            |
+| `floatPullBackHeight`        | `number`                                 | `0.25`             | Additional distance below ground used to pull character down. |
+| `floatSensorRadius`          | `number`                                 | `0.12`             | Radius of the sensor used to sense the ground.                |
+| `floatSpringK`               | `number`                                 | `600`              | Spring constant for floating.                                 |
+| `floatDampingC`              | `number`                                 | `28`               | Damping factor for float spring (prevents oscillation).       |
+| `collisionCheckIteration`    | `number`                                 | `3`                | Number of collision check per frame.                          |
+| `collisionPushBackVelocity`  | `number`                                 | `3`                | Extra velocity applied to resolve penetration.                |
+| `collisionPushBackDamping`   | `number`                                 | `0.1`              | Damping applied to the pushback force.                        |
+| `collisionPushBackThreshold` | `number`                                 | `0.005`            | Minimum depth before pushback activates.                      |
 
 ## 🧱 Collider Component Props
 

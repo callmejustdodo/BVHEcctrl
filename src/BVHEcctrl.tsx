@@ -33,7 +33,7 @@ import React, { useEffect, useRef, useMemo, type ReactNode, forwardRef, Suspense
 import { useFrame, useThree } from "@react-three/fiber";
 import { TransformControls, useKeyboardControls } from "@react-three/drei";
 import { clamp } from "three/src/math/MathUtils";
-import type { MovementInput, CharacterAnimationStatus } from ".";
+import type { MovementInput, CharacterAnimationStatus, FloatCheckType } from ".";
 import { useEcctrlStore } from ".";
 import { useJoystickStore } from ".";
 import { useAnimationStore } from ".";
@@ -83,11 +83,13 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
     turnSpeed = 15,
     maxWalkSpeed = 3,
     maxRunSpeed = 5,
-    acceleration = 26,
-    deceleration = 15,
+    acceleration = 30,
+    deceleration = 20,
     counterVelFactor = 1.5,
     airDragFactor = 0.3,
     jumpVel = 5,
+    // Float check props
+    floatCheckType = "BOTH",
     maxSlope = 1,
     floatHeight = 0.2,
     floatPullBackHeight = 0.25,
@@ -111,7 +113,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
     const capsuleLength = useMemo(() => colliderCapsuleArgs[1], [])
     // Ref for meshes
     // const characterGroupRef = useRef<THREE.Group | null>(null)
-    const characterGroupRef = useRef<THREE.Group>(new THREE.Group())
+    const characterGroupRef = useRef<THREE.Group | null>(null);
     // const characterGroupRef = ref ?? useRef<THREE.Group | null>(null);
     // const characterGroupRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
     const characterColliderRef = useRef<THREE.Mesh | null>(null);
@@ -868,7 +870,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
 
         // Reset float sensor hit point info
         localMinDistance.current = Infinity;
-        localClosestPoint.current.set(0, 0, 0);
+        localClosestPoint.current.set(Infinity, Infinity, Infinity);
 
         // Check if floating ray hits any map faces, 
         // and find the closest point to sensor start point
@@ -950,31 +952,40 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
 
         // Reset float sensor hit global info
         globalMinDistance.current = Infinity;
-        // globalClosestPoint.current.set(0, 0, 0);
+        globalClosestPoint.current.set(Infinity, Infinity, Infinity);
 
         /**
          * Floating sensor check if character is on ground
          */
-        // Update float raycaster position and direction
-        floatRaycaster.current.set(floatSensorSegment.current.start, gravityDir.current)
-        const intersects = floatRaycaster.current.intersectObjects(floatRaycastCandidates, false);
-
         // First: check if ray hits any collider mesh (fast and stable)
-        if (intersects.length > 0) {
-            const validHit = intersects.find(hit => hit.object.visible && !hit.object.userData.excludeFloatHit);
-            if (validHit) {
-                globalMinDistance.current = validHit.distance;
-                globalClosestPoint.current.copy(validHit.point);
-                floatNormalMatrix.current.getNormalMatrix(validHit.object.matrixWorld)
-                floatHitNormal.current.copy(validHit.normal!).applyMatrix3(floatNormalMatrix.current).normalize();
-                currSlopeAngle.current = floatHitNormal.current.angleTo(upAxis.current);
-                isOverMaxSlope.current = currSlopeAngle.current > maxSlope;
-                groundFriction.current = validHit.object.userData.friction;
-                floatHitMesh.current = validHit.object;
+        const useRaycastCheck = () => {
+            // Update float raycaster position and direction
+            floatRaycaster.current.set(floatSensorSegment.current.start, gravityDir.current)
+            const intersects = floatRaycaster.current.intersectObjects(floatRaycastCandidates, false);
+            if (intersects.length > 0) {
+                const validHit = intersects.find(hit => {
+                    floatNormalMatrix.current.getNormalMatrix(hit.object.matrixWorld)
+                    floatHitNormal.current.copy(hit.normal!).applyMatrix3(floatNormalMatrix.current).normalize();
+                    const angle = floatHitNormal.current.angleTo(upAxis.current);
+                    return angle < maxSlope && hit.object.visible && !hit.object.userData.excludeFloatHit
+                });
+                if (validHit) {
+                    globalMinDistance.current = validHit.distance;
+                    globalClosestPoint.current.copy(validHit.point);
+                    floatNormalMatrix.current.getNormalMatrix(validHit.object.matrixWorld)
+                    floatHitNormal.current.copy(validHit.normal!).applyMatrix3(floatNormalMatrix.current).normalize();
+                    currSlopeAngle.current = floatHitNormal.current.angleTo(upAxis.current);
+                    isOverMaxSlope.current = currSlopeAngle.current > maxSlope;
+                    groundFriction.current = validHit.object.userData.friction;
+                    floatHitMesh.current = validHit.object;
+                }
+                return !!validHit
             }
+            return false
         }
+
         // Second: fallback to shapecast if no ray hit (slow but accurate)
-        else {
+        const useShapecastCheck = () => {
             for (const mesh of colliderMeshesArray) {
                 // Early exit if map is not visible and if map geometry boundsTree is not ready
                 if (!mesh.visible || !mesh.geometry.boundsTree || mesh.userData.excludeFloatHit) continue;
@@ -990,6 +1001,19 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
                     floatingCheck(mesh, mesh.matrixWorld)
                 }
             }
+        }
+
+        // Condition check and use proper method
+        switch (floatCheckType) {
+            case "RAYCAST":
+                useRaycastCheck()
+                break;
+            case "SHAPECAST":
+                useShapecastCheck()
+                break;
+            case "BOTH":
+                if (!useRaycastCheck()) useShapecastCheck();
+                break;
         }
 
         // If globalMinDistance.current is valid, sensor hits something. 
@@ -1211,31 +1235,14 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
     const updateCharacterAnimation = useCallback((run: boolean, jump: boolean) => {
         // On ground condition
         if (isOnGround.current) {
-            if (!prevIsOnGround.current) {
-                return "JUMP_LAND"
-            } else {
-                if (inputDir.current.lengthSq() === 0) {
-                    return "IDLE"
-                } else {
-                    if (!run) {
-                        return "WALK"
-                    } else {
-                        return "RUN"
-                    }
-                }
-            }
+            if (!prevIsOnGround.current) return "JUMP_LAND";
+            if (inputDir.current.lengthSq() === 0) return "IDLE";
+            return run ? "RUN" : "WALK";
         }
         // In the air condition
         else {
-            if (prevIsOnGround.current && jump) {
-                return "JUMP_START"
-            } else {
-                if (isFalling.current) {
-                    return "JUMP_FALL"
-                } else {
-                    return "JUMP_IDLE"
-                }
-            }
+            if (prevIsOnGround.current && jump) return "JUMP_START";
+            return isFalling.current ? "JUMP_FALL" : "JUMP_IDLE";
         }
     }, [])
     const updateCharacterStatus = useCallback((run: boolean, jump: boolean) => {
@@ -1274,6 +1281,9 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
             get group() {
                 return characterGroupRef.current;
             },
+            get model() {
+                return characterModelRef.current;
+            },
             resetLinVel,
             setLinVel,
             setMovement,
@@ -1296,7 +1306,8 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
         standPointRef.current?.position.copy(globalClosestPoint.current);
 
         // Update camera looking direction indicator to follow character pos and looking dir
-        lookDirRef.current?.position.copy(characterGroupRef.current.position).addScaledVector(upAxis.current, 0.7)
+        if (characterGroupRef.current)
+            lookDirRef.current?.position.copy(characterGroupRef.current.position).addScaledVector(upAxis.current, 0.7)
         lookDirRef.current?.lookAt(lookDirRef.current?.position.clone().add(camProjDir.current))
 
         // Update input direction arrow
@@ -1429,7 +1440,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
             {/* Debug helper */}
             {debug &&
                 <group>
-                    <TransformControls object={characterGroupRef} />
+                    <TransformControls object={characterGroupRef.current!} />
                     {/* <TransformControls mode="rotate" object={characterGroupRef} scale={2} /> */}
 
                     {/* Character bunding box debugger */}
@@ -1484,16 +1495,6 @@ export default React.memo(BVHEcctrl) as ForwardRefExoticComponent<EcctrlProps & 
 /**
  * Export values/features/functions
  */
-// export { default as StaticCollider } from "./StaticCollider"
-// export type { StaticColliderProps } from './StaticCollider'
-// export { default as KinematicCollider } from "./KinematicCollider"
-// export type { KinematicColliderProps } from "./KinematicCollider"
-// export { default as InstancedStaticCollider } from "./InstancedStaticCollider"
-// export { useEcctrlStore } from "./stores/useEcctrlStore"
-// export type { StoreState } from "./stores/useEcctrlStore"
-// export { default as Joystick } from "./Joystick"
-// export { useJoystickStore } from "./stores/useJoystickStore"
-// export type { JoystickStoreState } from "./stores/useJoystickStore"
 export const characterStatus: CharacterStatus = {
     position: new THREE.Vector3(),
     linvel: new THREE.Vector3(),
@@ -1528,6 +1529,7 @@ export interface EcctrlProps extends Omit<React.ComponentProps<'group'>, 'ref'> 
     counterVelFactor?: number;
     airDragFactor?: number;
     jumpVel?: number;
+    floatCheckType?: FloatCheckType;
     maxSlope?: number;
     floatHeight?: number;
     floatPullBackHeight?: number;
@@ -1542,7 +1544,8 @@ export interface EcctrlProps extends Omit<React.ComponentProps<'group'>, 'ref'> 
 };
 
 export interface BVHEcctrlApi {
-    group: THREE.Group;
+    group: THREE.Group | null;
+    model: THREE.Group | null;
     resetLinVel: () => void;
     setLinVel: (v: THREE.Vector3) => void;
     setMovement: (input: MovementInput) => void;
