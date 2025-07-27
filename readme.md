@@ -238,6 +238,9 @@ ecctrlRef.current.model;
 // Reset current velocity to zero
 ecctrlRef.current.resetLinVel();
 
+// Add linear velocity directly
+ecctrlRef.current.addLinVel(THREE.Vector3);
+
 // Set linear velocity directly
 ecctrlRef.current.setLinVel(THREE.Vector3);
 

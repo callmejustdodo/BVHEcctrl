@@ -274,7 +274,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
      * Floating sensor preset
      */
     const currSlopeAngle = useRef<number>(0)
-    const isOverMaxSlope = useRef<boolean>(false)
+    // const isOverMaxSlope = useRef<boolean>(false)
     // const isOverSteepSlope = useRef<boolean>(false)
     const localMinDistance = useRef<number>(Infinity)
     const localClosestPoint = useRef<THREE.Vector3>(new THREE.Vector3())
@@ -936,7 +936,6 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
             globalClosestPoint.current.copy(localClosestPoint.current);
             floatHitNormal.current.copy(localHitNormal.current);
             currSlopeAngle.current = floatHitNormal.current.angleTo(upAxis.current);
-            isOverMaxSlope.current = currSlopeAngle.current > maxSlope;
             groundFriction.current = mesh.userData.friction;
             floatHitMesh.current = mesh;
         }
@@ -975,7 +974,6 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
                     floatNormalMatrix.current.getNormalMatrix(validHit.object.matrixWorld)
                     floatHitNormal.current.copy(validHit.normal!).applyMatrix3(floatNormalMatrix.current).normalize();
                     currSlopeAngle.current = floatHitNormal.current.angleTo(upAxis.current);
-                    isOverMaxSlope.current = currSlopeAngle.current > maxSlope;
                     groundFriction.current = validHit.object.userData.friction;
                     floatHitMesh.current = validHit.object;
                 }
@@ -1019,27 +1017,23 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
         // If globalMinDistance.current is valid, sensor hits something. 
         // Apply proper floating force to float character
         if (globalMinDistance.current < Infinity) {
-            // Check if detect ground below and if not over max slope
-            if (!isOverMaxSlope.current) {
-                if (globalMinDistance.current < floatHeight + capsuleRadius) {
-                    isOnGround.current = true
-                    isFalling.current = false
-                    jump = false // Reset jump state if character is on ground
-                }
-                // If not jumping, calculate floating force
-                if (!jump) {
-                    // Calculate spring force
-                    floatHitVec.current.subVectors(floatSensorSegment.current.start, globalClosestPoint.current);
-                    const springDist = floatHeight + capsuleRadius - floatHitVec.current.dot(upAxis.current);
-                    const springForce = floatSpringK * springDist;
-                    // Calculate damping force
-                    const dampingForce = floatDampingC * currentLinVel.current.dot(upAxis.current);
-                    const floatForce = springForce - dampingForce;
-                    // Apply force to character's velocity if on ground (force * dt / mass)
-                    if (isOnGround.current) currentLinVel.current.addScaledVector(upAxis.current, floatForce * delta / mass);
-                } else {
-                    isOnGround.current = false;
-                }
+            // Check if detect ground below
+            if (globalMinDistance.current < floatHeight + capsuleRadius) {
+                isOnGround.current = true
+                isFalling.current = false
+                jump = false // Reset jump state if character is on ground
+            }
+            // If not jumping, calculate floating force
+            if (!jump) {
+                // Calculate spring force
+                floatHitVec.current.subVectors(floatSensorSegment.current.start, globalClosestPoint.current);
+                const springDist = floatHeight + capsuleRadius - floatHitVec.current.dot(upAxis.current);
+                const springForce = floatSpringK * springDist;
+                // Calculate damping force
+                const dampingForce = floatDampingC * currentLinVel.current.dot(upAxis.current);
+                const floatForce = springForce - dampingForce;
+                // Apply force to character's velocity if on ground (force * dt / mass)
+                if (isOnGround.current) currentLinVel.current.addScaledVector(upAxis.current, floatForce * delta / mass);
             } else {
                 isOnGround.current = false;
             }
@@ -1266,7 +1260,8 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
      * Bind controller functions to ref
      */
     const resetLinVel = useCallback(() => currentLinVel.current.set(0, 0, 0), [])
-    const setLinVel = useCallback((velocity: THREE.Vector3) => currentLinVel.current.add(velocity), [])
+    const addLinVel = useCallback((velocity: THREE.Vector3) => currentLinVel.current.add(velocity), [])
+    const setLinVel = useCallback((velocity: THREE.Vector3) => currentLinVel.current.copy(velocity), [])
     const setMovement = useCallback((movement: MovementInput) => {
         if (movement.forward !== undefined) forwardState.current = movement.forward;
         if (movement.backward !== undefined) backwardState.current = movement.backward;
@@ -1285,10 +1280,11 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
                 return characterModelRef.current;
             },
             resetLinVel,
+            addLinVel,
             setLinVel,
             setMovement,
         };
-    }, [resetLinVel, setLinVel, setMovement]);
+    }, [resetLinVel, addLinVel, setLinVel, setMovement]);
 
     /**
      * Update debug indicators function
@@ -1547,6 +1543,7 @@ export interface BVHEcctrlApi {
     group: THREE.Group | null;
     model: THREE.Group | null;
     resetLinVel: () => void;
+    addLinVel: (v: THREE.Vector3) => void;
     setLinVel: (v: THREE.Vector3) => void;
     setMovement: (input: MovementInput) => void;
 }

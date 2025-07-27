@@ -5,7 +5,7 @@ import { useControls, folder, button } from "leva";
 import CharacterModel from "./CharacterModel";
 import React, { useEffect, useRef, useState } from "react";
 import Map from "./Map";
-import BVHEcctrl, { characterStatus, StaticCollider, KinematicCollider, InstancedStaticCollider, useEcctrlStore, useJoystickStore, type BVHEcctrlApi } from "../src/index"
+import BVHEcctrl, { characterStatus, StaticCollider, KinematicCollider, InstancedStaticCollider, useEcctrlStore, useJoystickStore, type BVHEcctrlApi, type FloatCheckType } from "../src/index"
 import { useFrame, useThree } from "@react-three/fiber";
 import StaticMap from "./StaticMap";
 import InstancedMap from "./InstancedMap";
@@ -72,6 +72,7 @@ export default function Experience() {
       jumpVel: { value: 6, min: 0, max: 20, step: 0.1 }, // 5
     }, { collapsed: true }),
     Floating: folder({
+      floatCheckType: { value: "BOTH" as FloatCheckType, options: ["RAYCAST", "SHAPECAST", "BOTH"] as FloatCheckType[] },
       maxSlope: { value: 1, min: 0, max: Math.PI / 2, step: 0.01 },
       floatHeight: { value: 0.4, min: 0, max: 1, step: 0.01 }, // 0.25
       floatPullBackHeight: { value: 0.25, min: 0, max: 1, step: 0.01 },
@@ -182,6 +183,7 @@ export default function Experience() {
           ref={ecctrlRef}
           debug={EcctrlDebugSettings.EcctrlDebug}
           {...EcctrlDebugSettings}
+          key={EcctrlDebugSettings.floatCheckType} // Force remount on change
           colliderCapsuleArgs={[0.3, 0.8, 4, 8]}
         >
           {/* Character Model */}
