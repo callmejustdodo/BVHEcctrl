@@ -17,6 +17,7 @@ export interface StaticColliderProps extends Omit<React.ComponentProps<'group'>,
     children?: ReactNode;
     debug?: boolean;
     debugVisualizeDepth?: number;
+    bvhName?: string;
     restitution?: number;
     friction?: number;
     excludeFloatHit?: boolean;
@@ -35,6 +36,7 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
     children,
     debug = false,
     debugVisualizeDepth = 10,
+    bvhName = "",
     restitution = 0.05,
     friction = 0.8,
     excludeFloatHit = false,
@@ -108,6 +110,7 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
         mergedMesh.current = new THREE.Mesh(mergedGeometry)
         mergedMesh.current.raycast = acceleratedRaycast
         // Preset merged mesh user data
+        mergedMesh.current.name = bvhName
         mergedMesh.current.userData = { restitution, friction, excludeFloatHit, excludeCollisionCheck, type: "STATIC" };
 
         // Save the merged mesh to globle store
@@ -151,12 +154,13 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
     useEffect(() => {
         if (mergedMesh.current) {
             mergedMesh.current.visible = props.visible ?? true
+            mergedMesh.current.name = bvhName
             mergedMesh.current.userData.friction = friction
             mergedMesh.current.userData.restitution = restitution
             mergedMesh.current.userData.excludeFloatHit = excludeFloatHit
             mergedMesh.current.userData.excludeCollisionCheck = excludeCollisionCheck
         }
-    }, [props.visible, friction, restitution, excludeFloatHit, excludeCollisionCheck])
+    }, [props.visible, bvhName, friction, restitution, excludeFloatHit, excludeCollisionCheck])
 
     /**
      * Update BVH debug helper

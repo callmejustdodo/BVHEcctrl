@@ -11,6 +11,7 @@ import { Joystick, VirtualButton } from "../src/index";
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
 const JoystickControls = () => {
+  // const isTouchScreen = true;
   const [isTouchScreen, setIsTouchScreen] = useState(false);
   useEffect(() => {
     // Check if using a touch control device, show/hide joystick

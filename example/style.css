@@ -41,7 +41,8 @@ body,
   font-family: Arial, sans-serif;
   color: darkgray;
   position: absolute;
-  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 2%;
   text-align: center;
 }

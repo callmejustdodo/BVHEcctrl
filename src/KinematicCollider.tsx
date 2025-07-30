@@ -9,9 +9,7 @@ import * as THREE from "three";
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import React, { useEffect, useRef, useMemo, useState, type ReactNode, forwardRef, type ForwardedRef, type RefObject, type JSX } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Helper, Merged, PivotControls, TransformControls, useBVH, useHelper } from "@react-three/drei";
 import { MeshBVHHelper, StaticGeometryGenerator, MeshBVH, computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH, type SplitStrategy } from "three-mesh-bvh";
-import { useControls } from "leva";
 import { useEcctrlStore } from "./stores/useEcctrlStore";
 import { clamp } from "three/src/math/MathUtils";
 
@@ -19,6 +17,8 @@ export interface KinematicColliderProps extends Omit<React.ComponentProps<'group
     children?: ReactNode;
     debug?: boolean;
     debugVisualizeDepth?: number;
+    bvhName?: string;
+    active?: boolean;
     restitution?: number;
     friction?: number;
     excludeFloatHit?: boolean;
@@ -37,6 +37,8 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
     children,
     debug = false,
     debugVisualizeDepth = 10,
+    bvhName = "",
+    active = true,
     restitution = 0.05,
     friction = 0.8,
     excludeFloatHit = false,
@@ -125,7 +127,9 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
         mergedMesh.current = new THREE.Mesh(mergedGeometry)
         mergedMesh.current.raycast = acceleratedRaycast
         // Update user data in merged mesh
+        mergedMesh.current.name = bvhName
         mergedMesh.current.userData = {
+            active,
             restitution,
             friction,
             excludeFloatHit,
@@ -224,12 +228,14 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
     useEffect(() => {
         if (mergedMesh.current) {
             mergedMesh.current.visible = props.visible ?? true
+            mergedMesh.current.name = bvhName
+            mergedMesh.current.userData.active = active
             mergedMesh.current.userData.friction = friction
             mergedMesh.current.userData.restitution = restitution
             mergedMesh.current.userData.excludeFloatHit = excludeFloatHit
             mergedMesh.current.userData.excludeCollisionCheck = excludeCollisionCheck
         }
-    }, [props.visible, friction, restitution, excludeFloatHit, excludeCollisionCheck])
+    }, [props.visible, bvhName, active, friction, restitution, excludeFloatHit, excludeCollisionCheck])
 
     /**
      * Update BVH debug helper
@@ -252,7 +258,8 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
      * Update kinematic collider metrix for character collision and floating response
      */
     useFrame((state, delta) => {
-        if (!mergedMesh.current || !colliderRef.current) return
+        if (!mergedMesh.current || !colliderRef.current || !active) return
+
         // Save previous transform
         prevPosition.current.copy(currentPosition.current)
         prevQuaternion.current.copy(currentQuaternion.current)

@@ -640,9 +640,14 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
              */
             // if collide with moving platform, calculate relativeVel with platformVelocity
             // otherwise relativeVel is same as the currentLinVel
-            if (mesh.userData.type === "STATIC") {
-                relativeCollideVel.current.copy(currentLinVel.current)
-            } else if (mesh.userData.type === "KINEMATIC") {
+            const isStatic = mesh.userData.type === "STATIC";
+            const isKinematic = mesh.userData.type === "KINEMATIC";
+            const isActive = mesh.userData.active === true;
+            if (isStatic) {
+                relativeCollideVel.current.copy(currentLinVel.current);
+            } else if (isKinematic && !isActive) {
+                relativeCollideVel.current.copy(currentLinVel.current);
+            } else if (isKinematic && isActive) {
                 // Convert angular velocity to linear velocity at the contact point: linVel = radius x angVel
                 // relativeContactPoint is the radius of the rotation, contactPointRotationalVel is converted linear velocity
                 relativeContactPoint.current.copy(accumulatedContactPoint.current).sub(mesh.userData.center)
@@ -1166,7 +1171,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
          */
         if (isOnGround.current &&
             floatHitMesh.current &&
-            floatHitMesh.current.userData.type === "STATIC" &&
+            (floatHitMesh.current.userData.type === "STATIC" || (floatHitMesh.current.userData.type === "KINEMATIC" && floatHitMesh.current.userData.active === false)) &&
             totalPlatformDeltaPos.current.lengthSq() > 0
         ) {
             totalPlatformDeltaPos.current.set(0, 0, 0);
@@ -1185,7 +1190,8 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
          */
         if (!isOnGround.current ||
             !floatHitMesh.current ||
-            floatHitMesh.current.userData.type !== "KINEMATIC"
+            floatHitMesh.current.userData.type !== "KINEMATIC" ||
+            (floatHitMesh.current.userData.type === "KINEMATIC" && floatHitMesh.current.userData.active === false)
         ) {
             isOnMovingPlatform.current = false
             return;

@@ -179,6 +179,9 @@ export default function Experience() {
       {/* Keyboard preset */}
       <KeyboardControls map={keyboardMap}>
         {/* Character Control */}
+        {/* <BVHEcctrl ref={ecctrlRef}>
+          <CharacterModel />
+        </BVHEcctrl> */}
         <BVHEcctrl
           ref={ecctrlRef}
           debug={EcctrlDebugSettings.EcctrlDebug}
@@ -186,8 +189,6 @@ export default function Experience() {
           key={EcctrlDebugSettings.floatCheckType} // Force remount on change
           colliderCapsuleArgs={[0.3, 0.8, 4, 8]}
         >
-          {/* Character Model */}
-          {/* <CharacterModel /> */}
           <AnimatedCharaterModel slowMotion={EcctrlDebugSettings.slowMotionFactor} />
         </BVHEcctrl>
       </KeyboardControls>
