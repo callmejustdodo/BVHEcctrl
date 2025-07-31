@@ -20,6 +20,7 @@ import InstancedBuild from "./InstancedBuild";
 import InfinityBuildRoof from "./InfinityBuildRoof";
 import AnimatedCharaterModel from "./AnimatedCharacterModel";
 import GeneralMap from "./GeneralMap"
+import IKCharacterModel from "./IKCharacterModel";
 
 export default function Experience() {
   /**
@@ -179,7 +180,7 @@ export default function Experience() {
       {/* Keyboard preset */}
       <KeyboardControls map={keyboardMap}>
         {/* Character Control */}
-        {/* <BVHEcctrl ref={ecctrlRef}>
+        {/* <BVHEcctrl ref={ecctrlRef} debug={EcctrlDebugSettings.EcctrlDebug}>
           <CharacterModel />
         </BVHEcctrl> */}
         <BVHEcctrl

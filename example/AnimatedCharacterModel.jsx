@@ -1,7 +1,9 @@
 import * as THREE from "three";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import { useAnimationStore } from "../src";
+import { CCDIKHelper, CCDIKSolver } from "three/examples/jsm/Addons.js";
+import { useFrame, useThree } from "@react-three/fiber";
 
 export default function AnimatedCharacterModel(props) {
   const slowMotion = props.slowMotion || 1;
@@ -120,29 +122,27 @@ export default function AnimatedCharacterModel(props) {
   }, [canPlayNext]);
 
   return (
-    <>
-      <group ref={ref} dispose={null} position={[0, -1.1, 0]}>
-        <group name="Mannequin">
-          <skinnedMesh
-            name="Mannequin_1"
-            geometry={nodes.Mannequin_1.geometry}
-            material={materials.M_Main}
-            skeleton={nodes.Mannequin_1.skeleton}
-            castShadow
-            receiveShadow
-          />
-          <skinnedMesh
-            name="Mannequin_2"
-            geometry={nodes.Mannequin_2.geometry}
-            material={materials.M_Joints}
-            skeleton={nodes.Mannequin_2.skeleton}
-            castShadow
-            receiveShadow
-          />
-        </group>
-        <primitive object={nodes.root} />
+    <group ref={ref} dispose={null} position={[0, -1.1, 0]}>
+      <group name="Mannequin">
+        <skinnedMesh
+          name="Mannequin_1"
+          geometry={nodes.Mannequin_1.geometry}
+          material={materials.M_Main}
+          skeleton={nodes.Mannequin_1.skeleton}
+          castShadow
+          receiveShadow
+        />
+        <skinnedMesh
+          name="Mannequin_2"
+          geometry={nodes.Mannequin_2.geometry}
+          material={materials.M_Joints}
+          skeleton={nodes.Mannequin_2.skeleton}
+          castShadow
+          receiveShadow
+        />
       </group>
-    </>
+      <primitive object={nodes.root} />
+    </group>
   );
 }
 

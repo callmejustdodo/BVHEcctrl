@@ -12,6 +12,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { MeshBVHHelper, StaticGeometryGenerator, MeshBVH, computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH, type SplitStrategy } from "three-mesh-bvh";
 import { useEcctrlStore } from "./stores/useEcctrlStore";
 import { clamp } from "three/src/math/MathUtils";
+import { useHelper } from "@react-three/drei";
 
 export interface KinematicColliderProps extends Omit<React.ComponentProps<'group'>, 'ref'> {
     children?: ReactNode;
@@ -56,9 +57,7 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
     /**
      * Initialize setups
      */
-    const { scene, gl } = useThree()
     const mergedMesh = useRef<THREE.Mesh | null>(null)
-    const bvhHelper = useRef<MeshBVHHelper | null>(null)
     const colliderRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
 
     /**
@@ -171,56 +170,8 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
                     m.material.dispose()
                 }
             }
-            if (bvhHelper.current) {
-                scene.remove(bvhHelper.current);
-                (bvhHelper.current as any).dispose?.()
-                bvhHelper.current = null
-            };
         };
     }, [])
-
-    /**
-     * 
-     */
-    // useEffect(() => {
-    //     const geometries: THREE.BufferGeometry[] = []
-    //     const tempObj = new THREE.Object3D()
-
-    //     colliderRef.current.updateMatrixWorld(true)
-
-    //     colliderRef.current.traverse(obj => {
-    //         if ((obj as THREE.InstancedMesh).isInstancedMesh) {
-    //             const instanced = obj as THREE.InstancedMesh
-    //             const baseMatrix = obj.matrixWorld.clone()
-
-    //             for (let i = 0; i < instanced.count; i++) {
-    //                 const instanceMatrix = new THREE.Matrix4()
-    //                 instanced.getMatrixAt(i, instanceMatrix)
-
-    //                 const worldMatrix = new THREE.Matrix4().multiplyMatrices(baseMatrix, instanceMatrix)
-    //                 const transformedGeometry = instanced.geometry.clone()
-    //                 transformedGeometry.applyMatrix4(worldMatrix)
-
-    //                 geometries.push(transformedGeometry)
-    //             }
-    //         } else if ((obj as THREE.Mesh).isMesh) {
-    //             const mesh = obj as THREE.Mesh
-    //             const geo = mesh.geometry.clone()
-    //             // geo.applyMatrix4(mesh.matrixWorld)
-    //             geometries.push(geo)
-    //         }
-    //     })
-
-    //     const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, false)
-    //     mergedGeometry.boundsTree = new MeshBVH(mergedGeometry)
-    //     mergedMesh.current = new THREE.Mesh(mergedGeometry)
-    //     mergedMesh.current.userData.friction = friction
-    //     mergedMesh.current.userData.restitution = restitution
-    //     useEcctrlStore.getState().setColliderMeshesArray(mergedMesh.current)
-    // }, [])
-    /**
-     * 
-     */
 
     /**
      * Update merged mesh properties and user data
@@ -240,19 +191,7 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
     /**
      * Update BVH debug helper
      */
-    useEffect(() => {
-        // If bvhHelper.current exist, only targgle visible
-        // Else create bvhHelper from mergedMesh.current
-        if (mergedMesh.current) {
-            if (bvhHelper.current) {
-                bvhHelper.current.visible = debug
-            } else {
-                bvhHelper.current = new MeshBVHHelper(mergedMesh.current, 20)
-                bvhHelper.current.visible = debug
-                scene.add(bvhHelper.current)
-            }
-        }
-    }, [debug])
+    useHelper(debug && mergedMesh.current ? { current: mergedMesh.current } : null, MeshBVHHelper)
 
     /**
      * Update kinematic collider metrix for character collision and floating response

@@ -8,10 +8,9 @@
 import * as THREE from "three";
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import React, { useEffect, useRef, type ReactNode, forwardRef, type RefObject, } from "react";
-import { useThree } from "@react-three/fiber";
 import { MeshBVHHelper, StaticGeometryGenerator, computeBoundsTree, disposeBoundsTree, SAH, type SplitStrategy, acceleratedRaycast } from "three-mesh-bvh";
 import { useEcctrlStore } from "./stores/useEcctrlStore";
-import { useBVH } from "@react-three/drei";
+import { useHelper } from "@react-three/drei";
 
 export interface StaticColliderProps extends Omit<React.ComponentProps<'group'>, 'ref'> {
     children?: ReactNode;
@@ -54,9 +53,7 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
     /**
      * Initialize setups
      */
-    const { scene, gl } = useThree()
     const mergedMesh = useRef<THREE.Mesh | null>(null)
-    const bvhHelper = useRef<MeshBVHHelper | null>(null)
     const colliderRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
 
     /**
@@ -140,11 +137,6 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
                     m.material.dispose();
                 }
             }
-            if (bvhHelper.current) {
-                scene.remove(bvhHelper.current);
-                (bvhHelper.current as any).dispose?.()
-                bvhHelper.current = null
-            };
         };
     }, [])
 
@@ -165,19 +157,7 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
     /**
      * Update BVH debug helper
      */
-    useEffect(() => {
-        if (mergedMesh.current) {
-            // If bvhHelper.current exist, only targgle visible
-            // Else create bvhHelper from mergedMesh.current
-            if (bvhHelper.current) {
-                bvhHelper.current.visible = debug
-            } else {
-                bvhHelper.current = new MeshBVHHelper(mergedMesh.current, 20)
-                bvhHelper.current.visible = debug
-                scene.add(bvhHelper.current)
-            }
-        }
-    }, [debug])
+    useHelper(debug && mergedMesh.current ? { current: mergedMesh.current } : null, MeshBVHHelper)
 
     return (
         <group ref={colliderRef} {...props} dispose={null}>
