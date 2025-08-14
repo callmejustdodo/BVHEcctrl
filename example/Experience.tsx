@@ -68,7 +68,7 @@ export default function Experience() {
       maxRunSpeed: { value: 5.5, min: 0, max: 20, step: 0.1 }, // 5
       acceleration: { value: 26, min: 0, max: 100, step: 1 },
       deceleration: { value: 30, min: 0, max: 50, step: 1 }, // 15
-      counterVelFactor: { value: 1.5, min: 0, max: 5, step: 0.1 },
+      counterAccFactor: { value: 0.5, min: 0, max: 5, step: 0.1 },
       airDragFactor: { value: 0.3, min: 0, max: 1, step: 0.05 },
       jumpVel: { value: 6, min: 0, max: 20, step: 0.1 }, // 5
     }, { collapsed: true }),
@@ -90,6 +90,7 @@ export default function Experience() {
   })
   const EcctrlMapDebugSettings = useControls("Map Debug", {
     MapDebug: false,
+    ActiveKinematicCollider: true,
     Map: folder({
       visible: true,
       excludeFloatHit: false,
@@ -127,7 +128,8 @@ export default function Experience() {
     }
   }, [])
 
-  useFrame((state) => {
+  const elapsedTime = useRef(0)
+  useFrame((state, delta) => {
     if (camControlRef.current && ecctrlRef.current) {
       // For camera control to follow character
       if (ecctrlRef.current.group)
@@ -143,15 +145,18 @@ export default function Experience() {
     }
 
     // Animate kinematic platform
-    if (kinematicPlatformRef001.current)
-      kinematicPlatformRef001.current.rotation.y = state.clock.elapsedTime * 0.5
-    if (kinematicPlatformRef002.current)
-      kinematicPlatformRef002.current.position.x = 5 * Math.sin(state.clock.elapsedTime * 0.5) + 10
-    if (kinematicPlatformRef003.current) {
-      kinematicPlatformRef003.current.rotation.y = state.clock.elapsedTime * 0.5
-      kinematicPlatformRef003.current.position.x = 5 * Math.sin(state.clock.elapsedTime * 0.5) - 10
+    if (EcctrlMapDebugSettings.ActiveKinematicCollider && !EcctrlDebugSettings.paused) {
+      elapsedTime.current += delta * EcctrlDebugSettings.slowMotionFactor
+      if (kinematicPlatformRef001.current)
+        kinematicPlatformRef001.current.rotation.y = elapsedTime.current * 0.5
+      if (kinematicPlatformRef002.current)
+        kinematicPlatformRef002.current.position.x = 5 * Math.sin(elapsedTime.current) + 10
+      if (kinematicPlatformRef003.current) {
+        kinematicPlatformRef003.current.rotation.y = elapsedTime.current * 0.5
+        kinematicPlatformRef003.current.position.x = 5 * Math.sin(elapsedTime.current * 0.5) - 10
+      }
+      if (kinematicBarRef.current) kinematicBarRef.current.rotation.z = elapsedTime.current * 0.2
     }
-    if (kinematicBarRef.current) kinematicBarRef.current.rotation.z = state.clock.elapsedTime * 0.2
   })
 
   return (
@@ -190,8 +195,17 @@ export default function Experience() {
           key={EcctrlDebugSettings.floatCheckType} // Force remount on change
           colliderCapsuleArgs={[0.3, 0.8, 4, 8]}
         >
-          <AnimatedCharaterModel slowMotion={EcctrlDebugSettings.slowMotionFactor} />
+          <AnimatedCharaterModel slowMotion={EcctrlDebugSettings.slowMotionFactor} paused={EcctrlDebugSettings.paused} />
         </BVHEcctrl>
+        {/* <BVHEcctrl
+          ref={ecctrlRef}
+          debug={EcctrlDebugSettings.EcctrlDebug}
+          floatHeight={0.3}
+          colliderCapsuleArgs={[0.4, 0, 4, 8]}
+          paused
+        >
+          <IKCharacterModel />
+        </BVHEcctrl> */}
       </KeyboardControls>
 
       {/**
@@ -259,19 +273,19 @@ export default function Experience() {
       </StaticCollider>
 
       {/* Moving Platform */}
-      <KinematicCollider ref={kinematicPlatformRef001} debug={EcctrlMapDebugSettings.MapDebug}>
+      <KinematicCollider ref={kinematicPlatformRef001} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
         <LargePlatform model={testMapModel} position={[0, -2.5, 0]} />
       </KinematicCollider>
 
-      <KinematicCollider ref={kinematicPlatformRef002} debug={EcctrlMapDebugSettings.MapDebug}>
+      <KinematicCollider ref={kinematicPlatformRef002} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
         <LargePlatform model={testMapModel} position={[0, -2.5, 0]} />
       </KinematicCollider>
 
-      <KinematicCollider ref={kinematicPlatformRef003} debug={EcctrlMapDebugSettings.MapDebug}>
+      <KinematicCollider ref={kinematicPlatformRef003} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
         <LargePlatform model={testMapModel} position={[0, -2.5, 0]} />
       </KinematicCollider>
 
-      <KinematicCollider ref={kinematicBarRef} debug={EcctrlMapDebugSettings.MapDebug}>
+      <KinematicCollider ref={kinematicBarRef} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
         <RotateBars model={testMapModel} />
       </KinematicCollider>
     </>

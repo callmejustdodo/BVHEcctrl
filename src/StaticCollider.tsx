@@ -7,7 +7,7 @@
 
 import * as THREE from "three";
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import React, { useEffect, useRef, type ReactNode, forwardRef, type RefObject, } from "react";
+import React, { useEffect, useRef, type ReactNode, forwardRef, type RefObject, useImperativeHandle, } from "react";
 import { MeshBVHHelper, StaticGeometryGenerator, computeBoundsTree, disposeBoundsTree, SAH, type SplitStrategy, acceleratedRaycast } from "three-mesh-bvh";
 import { useEcctrlStore } from "./stores/useEcctrlStore";
 import { useHelper } from "@react-three/drei";
@@ -53,8 +53,10 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
     /**
      * Initialize setups
      */
-    const mergedMesh = useRef<THREE.Mesh | null>(null)
-    const colliderRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
+    const mergedMesh = useRef<THREE.Mesh>(null!)
+    // const colliderRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
+    const colliderRef = useRef<THREE.Group>(null!);
+    useImperativeHandle(ref, () => colliderRef.current!, []);
 
     /**
      * Generate merged static geometry and BVH tree for collision detection
@@ -126,7 +128,6 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
                     mergedMesh.current.material.dispose()
                 }
                 mergedMesh.current.raycast = THREE.Mesh.prototype.raycast
-                mergedMesh.current = null
             }
             for (const m of meshes) {
                 m.raycast = THREE.Mesh.prototype.raycast
@@ -157,7 +158,7 @@ const StaticCollider = forwardRef<THREE.Group, StaticColliderProps>(({
     /**
      * Update BVH debug helper
      */
-    useHelper(debug && mergedMesh.current ? { current: mergedMesh.current } : null, MeshBVHHelper)
+    useHelper(debug && mergedMesh, MeshBVHHelper)
 
     return (
         <group ref={colliderRef} {...props} dispose={null}>

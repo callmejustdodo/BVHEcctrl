@@ -132,7 +132,7 @@ useFrame(() => {
 | `maxRunSpeed`                | `number`                                 | `5`                | Max speed when running.                                       |
 | `acceleration`               | `number`                                 | `30`               | Speed increase per second.                                    |
 | `deceleration`               | `number`                                 | `20`               | Speed decrease when input is released.                        |
-| `counterVelFactor`           | `number`                                 | `1.5`              | Extra velocity when changing direction.                       |
+| `counterAccFactor`           | `number`                                 | `0.5`              | Extra acceleration multiplier when changing direction.        |
 | `airDragFactor`              | `number`                                 | `0.3`              | Simulated drag while in air.                                  |
 | `jumpVel`                    | `number`                                 | `5`                | Upward velocity when jumping.                                 |
 | `floatCheckType`             | `"RAYCAST"` \| `"SHAPECAST"` \| `"BOTH"` | `BOTH`             | Able to switch between different float check type.            |

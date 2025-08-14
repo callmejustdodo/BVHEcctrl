@@ -6,7 +6,7 @@ import { CCDIKHelper, CCDIKSolver } from "three/examples/jsm/Addons.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
 export default function AnimatedCharacterModel(props) {
-  const slowMotion = props.slowMotion || 1;
+  const slowMotion = props.slowMotion ?? 1;
   // Reference to previous action name
   const prevActionNameRef = useRef("Idle_Loop");
   // State to control if next action can be played
@@ -53,21 +53,18 @@ export default function AnimatedCharacterModel(props) {
       ) {
         // Set canPlayNext to false to prevent immediate re-triggering
         setCanPlayNext(false);
-        nextAction.timeScale = 1.6 * slowMotion;
+        nextAction.timeScale = 1.6;
         nextAction
           .reset()
-          .crossFadeFrom(actions[prevActionName], 0.1 / slowMotion)
+          .crossFadeFrom(actions[prevActionName], 0.1)
           .setLoop(THREE.LoopOnce, 1)
           .play();
         nextAction.clampWhenFinished = true;
       } else {
         // For all other animations, allow immediate re-triggering
         setCanPlayNext(true);
-        nextAction.timeScale = 1 * slowMotion;
-        nextAction
-          .reset()
-          .crossFadeFrom(actions[prevActionName], 0.2 / slowMotion)
-          .play();
+        nextAction.timeScale = 1;
+        nextAction.reset().crossFadeFrom(actions[prevActionName], 0.2).play();
       }
 
       // Update the previous action name reference
@@ -120,6 +117,134 @@ export default function AnimatedCharacterModel(props) {
       mixer.removeEventListener("finished", onFinished);
     };
   }, [canPlayNext]);
+
+  // Add slowmotion & pause feature to animations
+  useEffect(() => {
+    mixer.timeScale = props.paused ? 0 : slowMotion;
+  }, [props.paused, slowMotion]);
+
+  /**
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   * IK TEST
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   */
+
+  // const footLTarget = useMemo(() => new THREE.Bone(), []);
+  // const footLTargetMesh = useRef(null);
+  // const footLIKSolver = useRef(null);
+  // const { scene } = useThree();
+  // useEffect(() => {
+  //   console.log(nodes, nodes.Mannequin_1.skeleton.bones);
+
+  //   // Add target mesh to the scene
+  //   footLTargetMesh.current = new THREE.Mesh(
+  //     new THREE.OctahedronGeometry(0.1),
+  //     new THREE.MeshBasicMaterial({ color: "Red" })
+  //   );
+  //   footLTargetMesh.current.position.y = -3;
+  //   scene.add(footLTargetMesh.current);
+
+  //   // Add target bones to skeleton
+  //   footLTarget.name = "footLTarget";
+  //   nodes["root"].add(footLTarget);
+
+  //   const newBones = [...nodes.Mannequin_1.skeleton.bones, footLTarget];
+  //   nodes.Mannequin_1.skeleton = new THREE.Skeleton(newBones);
+
+  //   // ik solver
+  //   const footLIKs = [
+  //     {
+  //       target: 53,
+  //       effector: 47,
+  //       links: [{ index: 46 }, { index: 45 }],
+  //     },
+  //   ];
+  //   footLIKSolver.current = new CCDIKSolver(nodes.Mannequin_1, footLIKs);
+  //   const helper = new CCDIKHelper(nodes.Mannequin_1, footLIKs, 0.01);
+  //   scene.add(helper);
+  // }, [nodes]);
+
+  // let time = 0;
+  // const testPos = useRef(new THREE.Vector3());
+
+  // // useFrame((state, delta) => {
+  // //   mixer.update(delta);
+  // // }, 1);
+  // useFrame(() => {
+  //   time += 0.01;
+  //   footLTargetMesh.current.position.z = Math.sin(time);
+  //   testPos.current.copy(footLTargetMesh.current.position);
+  //   ref.current.worldToLocal(testPos.current);
+  //   // testPos.current.applyMatrix4(ref.current.matrixWorld);
+  //   footLTarget.position.set(
+  //     testPos.current.x,
+  //     -testPos.current.z,
+  //     testPos.current.y
+  //   );
+
+  //   // console.log(nodes.root.children[0].children[1].children[0].children[0].position);
+  //   nodes["DEF-footL"].position.set(0, 0.2294798970222473, 0);
+  //   // footLIKSolver.current?.update();
+  // });
+
+  /**
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   */
 
   return (
     <group ref={ref} dispose={null} position={[0, -1.1, 0]}>

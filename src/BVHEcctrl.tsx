@@ -85,7 +85,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
     maxRunSpeed = 5,
     acceleration = 30,
     deceleration = 20,
-    counterVelFactor = 1.5,
+    counterAccFactor = 0.5,
     airDragFactor = 0.3,
     jumpVel = 5,
     // Float check props
@@ -443,18 +443,18 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
             wantToMoveVel.current.copy(inputDir.current).multiplyScalar(maxSpeed)
 
             // If currently moving in oppsite direction then wantToMoveVel
-            // Consider adding counter velocity to wantToMoveVel to improve control feels
-            // const dot = movingDir.current.dot(inputDir.current)
+            // Consider adding counter velocity to wantToMoveVel to improve control feels            
+            const dot = movingDir.current.dot(inputDir.current)
             // if (dot < 0) {
-            //     counterVel.current.copy(currentLinVel.current).multiplyScalar(dot * counterVelFactor * friction).projectOnPlane(upAxis.current)
-            //     // counterVel.current.clampLength(0, maxRunSpeed * counterVelFactor) // prevent overshoot
+            //     counterVel.current.copy(currentLinVelOnPlane.current).multiplyScalar(dot * 10)
+            //     // // counterVel.current.clampLength(0, maxRunSpeed * counterVelFactor) // prevent overshoot
             //     wantToMoveVel.current.add(counterVel.current)
-            // }    
+            // }
 
             // According to this formula: Δv = a * Δt
             // Find Δv which increase currentLinVel in every frame, until reach wantToMoveVel
             deltaLinVel.current.subVectors(wantToMoveVel.current, currentLinVelOnPlane.current)
-            deltaLinVel.current.clampLength(0, acceleration * friction * delta * (isOnGround.current ? 1 : airDragFactor))
+            deltaLinVel.current.clampLength(0, (dot <= 0 ? 1 + counterAccFactor : 1) * acceleration * friction * delta * (isOnGround.current ? 1 : airDragFactor))
 
             // Add Δv to currentLinVel
             // Consider adding slope effect to velocity
@@ -465,7 +465,7 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
             deltaLinVel.current.copy(currentLinVelOnPlane.current).clampLength(0, deceleration * friction * delta)
             currentLinVel.current.sub(deltaLinVel.current)
         }
-    }, [acceleration, deceleration, airDragFactor, counterVelFactor, maxRunSpeed, maxWalkSpeed, turnSpeed])
+    }, [acceleration, deceleration, airDragFactor, counterAccFactor, maxRunSpeed, maxWalkSpeed, turnSpeed])
     /**
      * Back-up handleCharacterMovement
      */
@@ -1528,7 +1528,7 @@ export interface EcctrlProps extends Omit<React.ComponentProps<'group'>, 'ref'> 
     maxRunSpeed?: number;
     acceleration?: number;
     deceleration?: number;
-    counterVelFactor?: number;
+    counterAccFactor?: number;
     airDragFactor?: number;
     jumpVel?: number;
     floatCheckType?: FloatCheckType;

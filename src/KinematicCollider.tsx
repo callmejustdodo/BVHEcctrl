@@ -7,7 +7,7 @@
 
 import * as THREE from "three";
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import React, { useEffect, useRef, useMemo, useState, type ReactNode, forwardRef, type ForwardedRef, type RefObject, type JSX } from "react";
+import React, { useEffect, useRef, useMemo, useState, type ReactNode, forwardRef, type ForwardedRef, type RefObject, type JSX, useImperativeHandle } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { MeshBVHHelper, StaticGeometryGenerator, MeshBVH, computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH, type SplitStrategy } from "three-mesh-bvh";
 import { useEcctrlStore } from "./stores/useEcctrlStore";
@@ -57,8 +57,10 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
     /**
      * Initialize setups
      */
-    const mergedMesh = useRef<THREE.Mesh | null>(null)
-    const colliderRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
+    const mergedMesh = useRef<THREE.Mesh>(null!)
+    // const colliderRef = (ref as RefObject<THREE.Group>) ?? useRef<THREE.Group | null>(null);
+    const colliderRef = useRef<THREE.Group>(null!);
+    useImperativeHandle(ref, () => colliderRef.current!, []);
 
     /**
      * Kinematic platform preset
@@ -159,7 +161,6 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
                     mergedMesh.current.material.dispose()
                 }
                 mergedMesh.current.raycast = THREE.Mesh.prototype.raycast
-                mergedMesh.current = null
             }
             for (const m of meshes) {
                 m.raycast = THREE.Mesh.prototype.raycast
@@ -191,7 +192,7 @@ const KinematicCollider = forwardRef<THREE.Group, KinematicColliderProps>(({
     /**
      * Update BVH debug helper
      */
-    useHelper(debug && mergedMesh.current ? { current: mergedMesh.current } : null, MeshBVHHelper)
+    useHelper(debug && mergedMesh, MeshBVHHelper)
 
     /**
      * Update kinematic collider metrix for character collision and floating response
