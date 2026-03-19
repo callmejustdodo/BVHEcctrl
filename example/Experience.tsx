@@ -21,6 +21,8 @@ import InfinityBuildRoof from "./InfinityBuildRoof";
 import AnimatedCharaterModel from "./AnimatedCharacterModel";
 import GeneralMap from "./GeneralMap"
 import IKCharacterModel from "./IKCharacterModel";
+import BuildingAMap from "./BuildingAMap";
+import BuildingBMap from "./BuildingBMap";
 
 export default function Experience() {
   /**
@@ -29,6 +31,8 @@ export default function Experience() {
   const testMapModel = useGLTF("/testMap.glb");
   // Retrieve collider meshes from store
   const colliderMeshesArray = useEcctrlStore((state) => state.colliderMeshesArray);
+
+
 
   /**
    * Initialize setup
@@ -127,6 +131,9 @@ export default function Experience() {
       kinematicBarRef.current.position.z = 22
     }
   }, [])
+useEffect(() => {
+  camControlRef.current!.distance = 0.001
+}, [])
 
   const elapsedTime = useRef(0)
   useFrame((state, delta) => {
@@ -240,6 +247,15 @@ export default function Experience() {
       {/* <StaticCollider>
         <HintzeHall />
       </StaticCollider> */}
+      {/* <StaticCollider>
+        <BuildingAMap />
+      </StaticCollider> */}
+      <StaticCollider>
+      <BuildingBMap />
+      </StaticCollider>
+      {/* <StaticCollider>
+        <GeneralMap />
+      </StaticCollider> */}
 
       {/**
        * 
@@ -256,24 +272,24 @@ export default function Experience() {
         <InfinityBuildRoof position={[0, -2, 0]} />
       </StaticCollider> */}
 
-      {/* <StaticCollider debug={EcctrlMapDebugSettings.MapDebug} {...EcctrlMapDebugSettings}>
+      <StaticCollider debug={EcctrlMapDebugSettings.MapDebug} {...EcctrlMapDebugSettings}>
         <LargeFloorMap position={[0, -2, 0]} />
-      </StaticCollider> */}
+      </StaticCollider>
 
       {/* <StaticCollider debug={EcctrlMapDebugSettings.MapDebug} {...EcctrlMapDebugSettings}>
         <SongMap />
       </StaticCollider> */}
 
-      <StaticCollider debug={EcctrlMapDebugSettings.MapDebug} {...EcctrlMapDebugSettings}>
+      {/* <StaticCollider debug={EcctrlMapDebugSettings.MapDebug} {...EcctrlMapDebugSettings}>
         <StaticMap model={testMapModel} position={[0, -3, 0]} />
       </StaticCollider>
 
       <StaticCollider debug={EcctrlMapDebugSettings.MapDebug} excludeFloatHit={true}>
         <SlideMap model={testMapModel} position={[0, 5, 22]} />
-      </StaticCollider>
+      </StaticCollider> */}
 
       {/* Moving Platform */}
-      <KinematicCollider ref={kinematicPlatformRef001} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
+      {/* <KinematicCollider ref={kinematicPlatformRef001} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
         <LargePlatform model={testMapModel} position={[0, -2.5, 0]} />
       </KinematicCollider>
 
@@ -287,7 +303,7 @@ export default function Experience() {
 
       <KinematicCollider ref={kinematicBarRef} debug={EcctrlMapDebugSettings.MapDebug} active={EcctrlMapDebugSettings.ActiveKinematicCollider}>
         <RotateBars model={testMapModel} />
-      </KinematicCollider>
+      </KinematicCollider> */}
     </>
   );
 }
