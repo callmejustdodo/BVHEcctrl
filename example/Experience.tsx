@@ -31,6 +31,7 @@ export default function Experience() {
   const testMapModel = useGLTF("/testMap.glb");
   // Retrieve collider meshes from store
   const colliderMeshesArray = useEcctrlStore((state) => state.colliderMeshesArray);
+  const pathname = window.location.pathname;
 
 
 
@@ -247,15 +248,16 @@ useEffect(() => {
       {/* <StaticCollider>
         <HintzeHall />
       </StaticCollider> */}
-      {/* <StaticCollider>
-        <BuildingAMap />
-      </StaticCollider> */}
-      <StaticCollider>
-      <BuildingBMap />
-      </StaticCollider>
-      {/* <StaticCollider>
-        <GeneralMap />
-      </StaticCollider> */}
+      {pathname === "/buildingA" && (
+        <StaticCollider>
+          <BuildingAMap />
+        </StaticCollider>
+      )}
+      {pathname === "/buildingB" && (
+        <StaticCollider>
+          <BuildingBMap />
+        </StaticCollider>
+      )}
 
       {/**
        * 
