@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npx vite build --config vercelVite.config.js",
+  "outputDirectory": "example/exampleDist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
