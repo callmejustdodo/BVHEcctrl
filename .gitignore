@@ -5,3 +5,4 @@ dist
 exampleDist
 .idea
 package-lock.json
+.vercel
