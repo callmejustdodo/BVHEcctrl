@@ -81,8 +81,8 @@ const BVHEcctrl = forwardRef<BVHEcctrlApi, EcctrlProps>(({
     slowMotionFactor = 1,
     // Controller props
     turnSpeed = 15,
-    maxWalkSpeed = 3,
-    maxRunSpeed = 5,
+    maxWalkSpeed = 3.0,
+    maxRunSpeed = 18.0,
     acceleration = 30,
     deceleration = 20,
     counterAccFactor = 0.5,
