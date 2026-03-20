@@ -1,15 +1,21 @@
 import { defineConfig } from "vite";
 import * as path from "node:path";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 const isCodeSandbox =
   "SANDBOX_URL" in process.env || "CODESANDBOX_HOST" in process.env;
 
 const dev = defineConfig({
-  plugins: [react()],
+  plugins: [tailwindcss(), react()],
   root: "example/",
   publicDir: "../public/",
   base: "./",
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "example"),
+    },
+  },
   server: {
     host: true,
     open: !isCodeSandbox, // Open if it's not a CodeSandbox

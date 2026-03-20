@@ -13,7 +13,11 @@
     "strictNullChecks": true,
     "jsx": "react",
     "declaration": true,
-    "lib": ["es2022", "dom"]
+    "lib": ["es2022", "dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./example/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "example"]

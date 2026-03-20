@@ -1,0 +1,1 @@
+Read this: https://r3f.docs.pmnd.rs/llms-full.txt
