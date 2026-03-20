@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
+import { useEcctrlStore } from "../src/index";
 
 interface Comment {
   id: string;
@@ -41,15 +42,193 @@ function formatTime(ts: number): string {
     " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 
+const inputStyle: React.CSSProperties = {
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid rgba(255,255,255,0.2)",
+  borderRadius: 6,
+  color: "#fff",
+  padding: "6px 10px",
+  fontSize: 13,
+  outline: "none",
+  fontFamily: "inherit",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+const btnStyle = (bg: string, color = "#fff"): React.CSSProperties => ({
+  background: bg,
+  border: "none",
+  borderRadius: 6,
+  color,
+  padding: "6px 14px",
+  cursor: "pointer",
+  fontSize: 12,
+  fontWeight: 500,
+  transition: "opacity 0.15s",
+});
+
+/** Isolated input form — uses uncontrolled inputs (refs) so typing doesn't trigger R3F re-renders */
+function CommentInput({
+  position,
+  onSubmit,
+  onCancel,
+}: {
+  position: [number, number, number];
+  onSubmit: (text: string, author: string) => void;
+  onCancel: () => void;
+}) {
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const authorRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (authorRef.current) authorRef.current.value = getSavedAuthor();
+    setTimeout(() => textRef.current?.focus(), 50);
+  }, []);
+
+  const submit = () => {
+    const text = textRef.current?.value.trim() || "";
+    if (!text) return;
+    const author = authorRef.current?.value.trim() || "anonymous";
+    setSavedAuthor(author);
+    onSubmit(text, author);
+  };
+
+  return (
+    <Html position={position} center style={{ pointerEvents: "auto" }}>
+      <div
+        style={{
+          background: "rgba(15,15,20,0.92)",
+          backdropFilter: "blur(12px)",
+          borderRadius: 12,
+          padding: 14,
+          width: 260,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+          <input
+            ref={authorRef}
+            defaultValue=""
+            onKeyDown={(e) => e.stopPropagation()}
+            placeholder="Your name"
+            style={{ ...inputStyle, width: "100%" }}
+          />
+        </div>
+        <textarea
+          ref={textRef}
+          defaultValue=""
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+            if (e.key === "Escape") onCancel();
+            e.stopPropagation();
+          }}
+          placeholder="Write a comment..."
+          rows={3}
+          style={{ ...inputStyle, resize: "vertical", marginBottom: 10 }}
+        />
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onCancel} style={btnStyle("rgba(255,255,255,0.1)", "#999")}>
+            Cancel
+          </button>
+          <button onClick={submit} style={btnStyle("#3b82f6")}>
+            Post
+          </button>
+        </div>
+      </div>
+    </Html>
+  );
+}
+
+/** Memoized marker — only re-renders when its own props change */
+const CommentMarker = React.memo(function CommentMarker({
+  comment,
+  isExpanded,
+  onExpand,
+  onClose,
+  onDelete,
+}: {
+  comment: Comment;
+  isExpanded: boolean;
+  onExpand: () => void;
+  onClose: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Html position={comment.position} center style={{ pointerEvents: "auto" }}>
+      {isExpanded ? (
+        <div
+          style={{
+            background: "rgba(15,15,20,0.92)",
+            backdropFilter: "blur(12px)",
+            borderRadius: 12,
+            padding: 14,
+            color: "#fff",
+            fontSize: 13,
+            width: 240,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontWeight: 600, color: "#93c5fd" }}>{comment.author}</span>
+            <span style={{ fontSize: 11, color: "#666" }}>{formatTime(comment.createdAt)}</span>
+          </div>
+          <div style={{ lineHeight: 1.5, marginBottom: 12, wordBreak: "break-word", color: "#e2e2e2" }}>
+            {comment.text}
+          </div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button onClick={onClose} style={btnStyle("rgba(255,255,255,0.1)", "#999")}>
+              Close
+            </button>
+            <button onClick={onDelete} style={btnStyle("#dc2626")}>
+              Delete
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onClick={onExpand}
+          title={`${comment.author}: ${comment.text}`}
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "#3b82f6",
+            border: "2px solid rgba(255,255,255,0.9)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 12px rgba(59,130,246,0.5)",
+            transition: "transform 0.15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.2)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </div>
+      )}
+    </Html>
+  );
+});
+
 export default function Comments() {
   const pathname = window.location.pathname;
   const [comments, setComments] = useState<Comment[]>(() => loadComments(pathname));
   const [pendingPosition, setPendingPosition] = useState<[number, number, number] | null>(null);
-  const [inputText, setInputText] = useState("");
-  const [authorName, setAuthorName] = useState(getSavedAuthor);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { scene, camera, gl } = useThree();
+  const raycasterRef = useRef(new THREE.Raycaster());
+  const { camera, gl } = useThree();
+  const colliderMeshesArray = useEcctrlStore((state) => state.colliderMeshesArray);
+  const bvhMeshes = useMemo(
+    () => colliderMeshesArray.filter((m) => m.geometry.boundsTree),
+    [colliderMeshesArray]
+  );
 
   useEffect(() => {
     saveComments(pathname, comments);
@@ -66,19 +245,16 @@ export default function Comments() {
         -((e.clientY - rect.top) / rect.height) * 2 + 1
       );
 
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(mouse, camera);
+      raycasterRef.current.setFromCamera(mouse, camera);
 
-      const intersects = raycaster.intersectObjects(scene.children, true);
+      const intersects = raycasterRef.current.intersectObjects(bvhMeshes, false);
       if (intersects.length > 0) {
         const point = intersects[0].point;
         setPendingPosition([point.x, point.y, point.z]);
-        setInputText("");
         setExpandedId(null);
-        setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [scene, camera, gl]
+    [bvhMeshes, camera, gl]
   );
 
   useEffect(() => {
@@ -86,166 +262,47 @@ export default function Comments() {
     return () => gl.domElement.removeEventListener("contextmenu", handleContextMenu);
   }, [gl, handleContextMenu]);
 
-  const submitComment = () => {
-    if (!inputText.trim() || !pendingPosition) return;
-    const author = authorName.trim() || "anonymous";
-    setSavedAuthor(author);
+  const handleSubmit = useCallback((text: string, author: string) => {
+    if (!pendingPosition) return;
     const newComment: Comment = {
       id: crypto.randomUUID(),
       position: pendingPosition,
-      text: inputText.trim(),
+      text,
       author,
       createdAt: Date.now(),
     };
     setComments((prev) => [...prev, newComment]);
     setPendingPosition(null);
-    setInputText("");
-  };
+  }, [pendingPosition]);
 
-  const deleteComment = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     setComments((prev) => prev.filter((c) => c.id !== id));
     setExpandedId(null);
-  };
+  }, []);
 
-  const cancelInput = () => {
+  const handleCancel = useCallback(() => {
     setPendingPosition(null);
-    setInputText("");
-  };
-
-  const inputStyle: React.CSSProperties = {
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.2)",
-    borderRadius: 6,
-    color: "#fff",
-    padding: "6px 10px",
-    fontSize: 13,
-    outline: "none",
-    fontFamily: "inherit",
-    width: "100%",
-    boxSizing: "border-box",
-  };
-
-  const btnStyle = (bg: string, color = "#fff"): React.CSSProperties => ({
-    background: bg,
-    border: "none",
-    borderRadius: 6,
-    color,
-    padding: "6px 14px",
-    cursor: "pointer",
-    fontSize: 12,
-    fontWeight: 500,
-    transition: "opacity 0.15s",
-  });
+  }, []);
 
   return (
     <>
       {pendingPosition && (
-        <Html position={pendingPosition} center style={{ pointerEvents: "auto" }}>
-          <div
-            style={{
-              background: "rgba(15,15,20,0.92)",
-              backdropFilter: "blur(12px)",
-              borderRadius: 12,
-              padding: 14,
-              width: 260,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-              <input
-                value={authorName}
-                onChange={(e) => setAuthorName(e.target.value)}
-                onKeyDown={(e) => e.stopPropagation()}
-                placeholder="Your name"
-                style={{ ...inputStyle, width: "100%" }}
-              />
-            </div>
-            <textarea
-              ref={inputRef}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); }
-                if (e.key === "Escape") cancelInput();
-                e.stopPropagation();
-              }}
-              placeholder="Write a comment..."
-              rows={3}
-              style={{ ...inputStyle, resize: "vertical", marginBottom: 10 }}
-            />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button onClick={cancelInput} style={btnStyle("rgba(255,255,255,0.1)", "#999")}>
-                Cancel
-              </button>
-              <button onClick={submitComment} style={btnStyle("#3b82f6")}>
-                Post
-              </button>
-            </div>
-          </div>
-        </Html>
+        <CommentInput
+          position={pendingPosition}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
       )}
 
       {comments.map((comment) => (
-        <Html key={comment.id} position={comment.position} center style={{ pointerEvents: "auto" }}>
-          {expandedId === comment.id ? (
-            <div
-              style={{
-                background: "rgba(15,15,20,0.92)",
-                backdropFilter: "blur(12px)",
-                borderRadius: 12,
-                padding: 14,
-                color: "#fff",
-                fontSize: 13,
-                width: 240,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontWeight: 600, color: "#93c5fd" }}>{comment.author}</span>
-                <span style={{ fontSize: 11, color: "#666" }}>{formatTime(comment.createdAt)}</span>
-              </div>
-              <div style={{ lineHeight: 1.5, marginBottom: 12, wordBreak: "break-word", color: "#e2e2e2" }}>
-                {comment.text}
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button onClick={() => setExpandedId(null)} style={btnStyle("rgba(255,255,255,0.1)", "#999")}>
-                  Close
-                </button>
-                <button onClick={() => deleteComment(comment.id)} style={btnStyle("#dc2626")}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              onClick={() => setExpandedId(comment.id)}
-              title={`${comment.author}: ${comment.text}`}
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                background: "#3b82f6",
-                border: "2px solid rgba(255,255,255,0.9)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 12px rgba(59,130,246,0.5)",
-                transition: "transform 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.2)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-          )}
-        </Html>
+        <CommentMarker
+          key={comment.id}
+          comment={comment}
+          isExpanded={expandedId === comment.id}
+          onExpand={() => setExpandedId(comment.id)}
+          onClose={() => setExpandedId(null)}
+          onDelete={() => handleDelete(comment.id)}
+        />
       ))}
     </>
   );
