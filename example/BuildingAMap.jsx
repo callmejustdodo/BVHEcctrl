@@ -1,5 +1,6 @@
 import { useGLTF } from "@react-three/drei";
 import { useEffect } from "react";
+import * as THREE from "three";
 
 export default function BuildingAMap() {
   const map = useGLTF("./BuildingA.glb");
@@ -8,6 +9,11 @@ export default function BuildingAMap() {
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+        if (child.material) {
+          child.material.side = THREE.DoubleSide;
+          if (child.material.map) child.material.map.colorSpace = THREE.SRGBColorSpace;
+          child.material.needsUpdate = true;
+        }
       }
     });
   }, [map]);

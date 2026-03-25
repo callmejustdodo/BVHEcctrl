@@ -1,5 +1,5 @@
 import "./style.css";
-import * as THREE from "three/webgpu";
+import * as THREE from "three";
 import ReactDOM from "react-dom/client";
 import { Canvas, extend } from "@react-three/fiber";
 import Experience from "./Experience";
