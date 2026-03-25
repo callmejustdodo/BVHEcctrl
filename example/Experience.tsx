@@ -23,6 +23,7 @@ import GeneralMap from "./GeneralMap"
 import IKCharacterModel from "./IKCharacterModel";
 import BuildingAMap from "./BuildingAMap";
 import BuildingBMap from "./BuildingBMap";
+import BuildingCMap from "./BuildingCMap";
 import Comments from "./Comments";
 
 export default function Experience() {
@@ -257,6 +258,11 @@ useEffect(() => {
       {pathname === "/buildingB" && (
         <StaticCollider>
           <BuildingBMap />
+        </StaticCollider>
+      )}
+      {pathname === "/buildingC" && (
+        <StaticCollider>
+          <BuildingCMap />
         </StaticCollider>
       )}
 
