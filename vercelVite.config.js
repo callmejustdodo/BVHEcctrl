@@ -1,10 +1,11 @@
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 const isCodeSandbox =
   "SANDBOX_URL" in process.env || "CODESANDBOX_HOST" in process.env;
 
 export default {
-  plugins: [react()],
+  plugins: [tailwindcss(), react()],
   root: "example/",
   publicDir: "../public/",
   base: "./",
