@@ -8,19 +8,18 @@
 html,
 body,
 #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 3D canvas pages: fixed fullscreen layout */
+#root:has(canvas) {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
   background: #333;
-  /* background: rgb(0,0,0); */
-  /* background: rgb(253, 228, 255);
-  background: linear-gradient(
-    0deg,
-    rgba(253, 228, 255, 1) 0%,
-    rgba(124, 156, 254, 1) 100%
-  ); */
   user-select: none;
   -moz-user-select: none;
   -webkit-user-drag: none;
